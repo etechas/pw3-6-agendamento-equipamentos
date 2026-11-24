@@ -33,21 +33,19 @@ public class ReservaService {
     public ReservaArmario criar(ReservaArmario reserva) {
         reserva.setId(null);
         reserva.setAtivo(true);
-        validar(reserva, -1);
+        validar(reserva, -1, true);
         return repository.save(reserva);
     }
 
     public ReservaArmario atualizar(Integer id, ReservaArmario dados) {
         ReservaArmario existente = buscarPorId(id);
-        validar(dados, id);
+        // só reservas ativas ocupam o armário; reserva já liberada pode ser editada sem checar conflito
+        validar(dados, id, Boolean.TRUE.equals(existente.getAtivo()));
 
         existente.setNumeroArmario(dados.getNumeroArmario());
         existente.setNomeAluno(dados.getNomeAluno());
         existente.setDataInicio(dados.getDataInicio());
         existente.setDataFim(dados.getDataFim());
-        if (dados.getAtivo() != null) {
-            existente.setAtivo(dados.getAtivo());
-        }
         return repository.save(existente);
     }
 
@@ -55,7 +53,7 @@ public class ReservaService {
         repository.delete(buscarPorId(id));
     }
 
-    public ReservaArmario finalizar(Integer id) {
+    public ReservaArmario liberar(Integer id) {
         ReservaArmario reserva = buscarPorId(id);
         if (!Boolean.TRUE.equals(reserva.getAtivo())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A reserva já está finalizada");
@@ -64,7 +62,7 @@ public class ReservaService {
         return repository.save(reserva);
     }
 
-    private void validar(ReservaArmario r, Integer idIgnorado) {
+    private void validar(ReservaArmario r, Integer idIgnorado, boolean verificarConflito) {
         if (r.getNumeroArmario() == null || r.getNumeroArmario() <= 0) {
             throw erro("Número do armário é obrigatório e deve ser positivo");
         }
@@ -77,7 +75,7 @@ public class ReservaService {
         if (r.getDataFim().isBefore(r.getDataInicio())) {
             throw erro("A data de fim não pode ser anterior à data de início");
         }
-        boolean conflito = repository.existeConflito(
+        boolean conflito = verificarConflito && repository.existeConflito(
                 r.getNumeroArmario(), r.getDataInicio(), r.getDataFim(), idIgnorado);
         if (conflito) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,

@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/reservas")
+@RequestMapping("/api/armarios")
 @CrossOrigin("*")
 public class ReservaController {
 
@@ -34,7 +34,7 @@ public class ReservaController {
         return service.buscarPorId(id);
     }
 
-    @PostMapping("/reservar")
+    @PostMapping
     public ResponseEntity<ReservaArmario> criar(@RequestBody ReservaArmario reserva) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.criar(reserva));
     }
@@ -50,8 +50,8 @@ public class ReservaController {
         service.excluir(id);
     }
 
-    @PatchMapping("/{id}/finalizar")
-    public ReservaArmario finalizar(@PathVariable Integer id) {
-        return service.finalizar(id);
+    @PatchMapping("/{id}/liberar")
+    public ReservaArmario liberar(@PathVariable Integer id) {
+        return service.liberar(id);
     }
 }
